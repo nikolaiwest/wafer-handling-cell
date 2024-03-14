@@ -19,7 +19,7 @@ class Server:
     def __init__(self):
         """Initializes the server with predefined settings."""
         # Name of the server, used for identifying configuration files
-        self.name = "rpi00"
+        self.set_name()
         # Set the server IP and port from a configuration file
         self.set_server_creds()
         # Initialize the output file
@@ -97,10 +97,15 @@ class Server:
             # Returns None if loading fails
         return None
 
+    def set_name(self) -> None:
+        cur_path = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(cur_path)
+        self.name = os.path.basename(parent_dir)
+
     def set_server_creds(self) -> None:
         """Sets the server's IP and port from a configuration file."""
         # Path to the configuration file
-        path = f"/home/{self.name}/wafer_handling_cell/server.json"
+        path = f"/home/{self.name}/wafer-handling-cell/server.json"
         credentials = self.load_json(path)
         if credentials is None:
             raise ValueError(f"Credentials could not be loaded: {path}")
@@ -113,7 +118,7 @@ class Server:
         If the file doesn't exist, it creates it and adds the header row.
         """
         # The CSV file where data will be saved
-        self.csv_path = f"/home/{self.name}/wafer_handling_cell/whc_data.csv"
+        self.csv_path = f"/home/{self.name}/wafer-handling-cell/whc_data.csv"
 
         # Define column headers for the CSV file
         headers = [

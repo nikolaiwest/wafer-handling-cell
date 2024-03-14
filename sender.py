@@ -2,11 +2,12 @@
 Script Name: sender.py
 Author: Nikolai West 
 Date Created: 13.03.2024
-Last Modified: 13.03.2024
-Version: 1.0.0
+Last Modified: 14.03.2024
+Version: 1.0.1
 """
 
 # default
+import os
 import json
 import time
 import socket
@@ -23,7 +24,7 @@ class Sender:
     def __init__(self):
         """Initializes the sender with server credentials and sense hat setup."""
         # Identifier for the Raspberry Pi
-        self.name = "rpi01"
+        self.set_name()
         # Load server credentials from a file
         self.set_server_creds()
         # Initialize the Sense HAT
@@ -132,7 +133,7 @@ class Sender:
 
     def set_led_number(self):
         """Displays the Raspberry Pi's identifier number on the Sense HAT's LED matrix."""
-        pixel_path = f"/home/{self.name}/wafer_handling_cell/numbers.json"
+        pixel_path = f"/home/{self.name}/wafer-handling-cell/numbers.json"
         pixel_list = self.load_json(pixel_path)[self.name]
         self.sense_hat.set_pixels(pixel_list)
 
@@ -182,9 +183,14 @@ class Sender:
         # Return None or an empty dict if loading fails.
         return None
 
+    def set_name(self) -> None:
+        cur_path = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(cur_path)
+        self.name = os.path.basename(parent_dir)
+
     def set_server_creds(self) -> None:
         """Sets the server IP and port based on the loaded server credentials."""
-        path = f"/home/{self.name}/wafer_handling_cell/server.json"
+        path = f"/home/{self.name}/wafer-handling-cell/server.json"
         credentials = self.load_json(path)
         if credentials is None:
             raise ValueError(f"Credentials could not be loaded: {path}")
