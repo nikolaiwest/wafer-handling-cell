@@ -3,7 +3,7 @@ Script Name: server.py
 Author: Nikolai West 
 Date Created: 14.03.2024
 Last Modified: 14.03.2024
-Version: 1.0.0
+Version: 1.0.2
 """
 
 # default
@@ -11,6 +11,7 @@ import os
 import csv
 import json
 import socket
+import logging
 
 
 class Server:
@@ -18,6 +19,8 @@ class Server:
 
     def __init__(self):
         """Initializes the server with predefined settings."""
+        # Get a logger for this module
+        self.logger = logging.getLogger(__name__)
         # Name of the server, used for identifying configuration files
         self.set_name()
         # Set the server IP and port from a configuration file
@@ -42,18 +45,20 @@ class Server:
         self.sock.bind((self.server_ip, self.server_port))
         # Listen for connections, queueing up to 5 connection requests
         self.sock.listen(5)
-        print(f"Server listening on {self.server_ip}:{self.server_port}")
+        self.logger.info(f"Server listening on {self.server_ip}:{self.server_port}")
 
         while True:
-            # Accepts a new connection
+            # Accept a new connection
             client, address = self.sock.accept()
             ip_address = address[0]
             # Checks if the IP address is allowed
             if ip_address in self.allowed_ips:
                 self.handle_client(client)
             else:
-                print(f"Connection attempt from unauthorized IP address: {ip_address}")
-                # Closes the connection if the IP is not allowed
+                self.logger.warning(
+                    f"Connection attempt from unauthorized IP address: {ip_address}"
+                )
+                # Close the connection if the IP is not allowed
                 client.close()
 
     def handle_client(self, client_socket):
@@ -78,9 +83,9 @@ class Server:
         try:
             self.listen()
         except KeyboardInterrupt:
-            print("Server shutting down.")
+            self.logger.info("Server shutting down.")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            self.logger.exception("An error occurred: ", exc_info=e)
         finally:
             # Ensures the socket is closed on shutdown or error
             self.sock.close()
@@ -91,10 +96,10 @@ class Server:
             with open(path, "r") as file:
                 return json.load(file)
         except FileNotFoundError:
-            print(f"File not found: {path}")
+            self.logger.error(f"File not found: {path}")
         except json.JSONDecodeError as e:
-            print(f"Invalid JSON file provided: {e}")
-            # Returns None if loading fails
+            self.logger.error(f"Invalid JSON file provided: {e}", exc_info=e)
+        # Returns None if loading fails
         return None
 
     def set_name(self) -> None:
