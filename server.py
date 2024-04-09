@@ -12,6 +12,7 @@ import csv
 import json
 import socket
 import logging
+import threading
 
 
 class Server:
@@ -53,20 +54,33 @@ class Server:
             ip_address = address[0]
             # Checks if the IP address is allowed
             if ip_address in self.allowed_ips:
-                self.handle_client(client)
+                # Create a new thread for each client connection
+                client_thread = threading.Thread(
+                    target=self.handle_client, args=(client,)
+                )
+                client_thread.start()  # Start the thread
             else:
                 self.logger.warning(
                     f"Connection attempt from unauthorized IP address: {ip_address}"
                 )
-                # Close the connection if the IP is not allowed
                 client.close()
 
     def handle_client(self, client_socket):
-        """Receives data from a client and saves it."""
-        with client_socket as sock:
-            # Receive and save data from the client
-            message = sock.recv(1024).decode("utf-8")
-            self.save_data(message)
+        """Receives data from a client and continuously saves it until the connection is closed."""
+        try:
+            while True:
+                # Attempt to receive data from the client
+                message = client_socket.recv(1024).decode("utf-8")
+                # Break the loop if no data is received, indicating the client has closed the connection
+                if not message:
+                    break
+                # Save the received data
+                self.save_data(message)
+        except socket.error as e:
+            self.logger.error(f"Socket error: {e}")
+        finally:
+            # Close the connection once done
+            client_socket.close()
 
     def save_data(self, data):
         """Saves the received data along with a timestamp to the CSV file."""
