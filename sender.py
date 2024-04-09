@@ -2,8 +2,8 @@
 Script Name: sender.py
 Author: Nikolai West 
 Date Created: 13.03.2024
-Last Modified: 14.03.2024
-Version: 1.0.1
+Last Modified: 09.04.2024
+Version: 1.0.3
 """
 
 # default
@@ -16,11 +16,6 @@ from datetime import datetime
 
 # other
 from sense_hat import SenseHat
-
-
-#
-# TODO: Fix "[Errno 32] Broken pipe." when running the sender scripts.
-#
 
 
 class Sender:
@@ -61,40 +56,24 @@ class Sender:
         return f"{time_str},{self.name},{ori_str}{gyr_str}{acc_str}"
 
     def send_data(self):
-        # Establish a connection if not already connected or if a previous send failed
+        """Sends the collected data to the server via TCP."""
+        # Establish a connection if not already connected
         if not self.sock:
             self.reconnect()
-
+        # Send data
         try:
             # Fetch the sensor data
             data = self.fetch_data()
             # Attempt to send data
             self.sock.sendall(data.encode("utf-8"))
-            print("send :)")
-        except (BrokenPipeError, socket.error) as e:
+        # Handle potential sending errors
+        except socket.error as e:
             print(f"Attempting to reconnect after connection error: {e}.")
-            # Close the current socket safely
-            self.close_socket()
-            # Attempt to reconnect
             self.reconnect()
-            # Retry sending data after reconnecting successfully
             try:
                 self.sock.sendall(data.encode("utf-8"))
-                print("send :)")
             except socket.error as e:
                 print(f"Failed to send data after reconnecting: {e}")
-                # Close the current socket safely to ensure clean state for future attempts
-                self.close_socket()
-
-    def close_socket(self):
-        """Safely close the current socket."""
-        if self.sock:
-            try:
-                self.sock.close()
-            except socket.error as e:
-                print(f"Error closing socket: {e}")
-            finally:
-                self.sock = None
 
     def reconnect(self):
         """Attempts to reconnect to the server with exponential backoff."""

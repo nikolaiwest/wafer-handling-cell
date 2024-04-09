@@ -2,8 +2,8 @@
 Script Name: server.py
 Author: Nikolai West 
 Date Created: 14.03.2024
-Last Modified: 14.03.2024
-Version: 1.0.2
+Last Modified: 09.04.2024
+Version: 1.0.3
 """
 
 # default
